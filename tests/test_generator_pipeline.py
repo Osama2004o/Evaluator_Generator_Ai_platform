@@ -150,6 +150,7 @@ def main():
 
     # Flush response cache to force a fresh LLM call
     cache.flush_response_cache()
+    cache.flush_semantic_cache()
 
     t0 = time.perf_counter()
     gen_result = gen.generate(query=test_query, loop=1)
@@ -163,9 +164,9 @@ def main():
     print(f"       Answer preview : {gen_result['answer'][:300]}…")
 
     # ══════════════════════════════════════════════
-    # TEST 5 — Cached Response Replay (Loop 1, cache hit)
+    # TEST 5 — Exact Cached Response Replay (same query)
     # ══════════════════════════════════════════════
-    divider("TEST 5 — Cached Response Replay (same query)")
+    divider("TEST 5 — Exact Cached Response Replay (same query)")
 
     t0 = time.perf_counter()
     cached_result = gen.generate(query=test_query, loop=1)
@@ -176,6 +177,23 @@ def main():
         f"Instant: {t_cached:.0f}ms vs original {t_gen:.0f}ms",
         t_cached < t_gen,
     )
+
+    # ══════════════════════════════════════════════
+    # TEST 5B — Semantic Cache Replay (equivalent query via Memurai VSIM)
+    # ══════════════════════════════════════════════
+    divider("TEST 5B — Semantic Cache Replay (equivalent query via Memurai VSIM)")
+
+    equivalent_query = "Can you describe the Singleton pattern in Python?"
+    t0 = time.perf_counter()
+    semantic_result = gen.generate(query=equivalent_query, loop=1)
+    t_sem = (time.perf_counter() - t0) * 1000
+
+    check("Equivalent query served from cache", semantic_result["cached"] is True)
+    check("Identified as semantic cache hit", semantic_result.get("cache_type") == "semantic")
+    sim = semantic_result.get("similarity_score", 0.0)
+    check("Semantic similarity score >= 0.80", sim >= 0.80, f"Score: {sim:.4f}")
+    print(f"       Time           : {t_sem:.0f} ms")
+    print(f"       Similarity     : {sim:.4f}")
 
     # ══════════════════════════════════════════════
     # TEST 6 — Refinement with Evaluator Feedback (Loop 2)
@@ -269,17 +287,20 @@ def main():
                 break
 
         cache_keys = [k for k in all_keys if k.startswith("cache:")]
+        semantic_keys = [k for k in all_keys if k.startswith("semantic_cache:")]
         memory_keys = [k for k in all_keys if k.startswith("memory:gen:")]
 
-        print(f"       Total keys in Redis   : {len(all_keys)}")
-        print(f"       Cache keys (cache:*)   : {len(cache_keys)}")
-        print(f"       Memory keys (memory:*) : {len(memory_keys)}")
+        print(f"       Total keys in Redis     : {len(all_keys)}")
+        print(f"       Cache keys (cache:*)     : {len(cache_keys)}")
+        print(f"       Semantic keys (semantic:) : {len(semantic_keys)}")
+        print(f"       Memory keys (memory:*)   : {len(memory_keys)}")
 
         check("Cache keys exist in Redis", len(cache_keys) > 0)
+        check("Semantic cache keys exist in Redis", len(semantic_keys) > 0)
         check("Generator memory key exists", len(memory_keys) > 0)
 
         print("\n       ── Key details ──")
-        for k in sorted(cache_keys + memory_keys):
+        for k in sorted(cache_keys + semantic_keys + memory_keys):
             key_type = r.type(k)
             ttl = r.ttl(k)
             print(f"       {k[:70]:<70}  type={key_type:<6}  TTL={ttl}s")

@@ -36,5 +36,11 @@ CACHE_TTL_RETRIEVAL = 60 * 60 * 24       # 24 hours for retrieval cache
 CACHE_TTL_RESPONSE = 60 * 60 * 12        # 12 hours for generator response cache
 CACHE_TTL_MEMORY = 60 * 60 * 24 * 7      # 7 days for generator session memory
 
+# Semantic Cache Configuration (Memurai vectorset)
+SEMANTIC_CACHE_ENABLED = True
+SEMANTIC_CACHE_THRESHOLD = 0.80
+SEMANTIC_CACHE_KEY = "semantic_cache:prompts"
+SEMANTIC_ANSWER_PREFIX = "semantic_cache:answer:"
+
 # Generator defaults
 MAX_REFINEMENT_LOOPS = 4

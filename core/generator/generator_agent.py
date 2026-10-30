@@ -150,6 +150,7 @@ class GeneratorAgent:
 
         if loop == 1:
             self.cache.set_response_cache(query, context_hash, result)
+            self.cache.set_semantic_response(query, result)
 
         self.memory.add_turn(
             query=query,
@@ -167,8 +168,12 @@ class GeneratorAgent:
     # ──────────────────────────────────────────────
 
     def _check_response_cache(self, query: str, top_k: int) -> Optional[Dict[str, Any]]:
-        """Attempt to return a cached response for the initial loop."""
-        # We need the context hash, so we check retrieval cache first
+        """
+        Attempt to return a cached response for the initial loop.
+        Tier 1: Exact hash cache lookup (O(1))
+        Tier 2: Semantic vector cache lookup (Memurai vectorset VSIM)
+        """
+        # Tier 1: Exact cache
         context_results = self._retrieve_context(query, top_k)
         context_hash = CacheManager.hash_context(
             [r.get("content", "") for r in context_results]
@@ -176,8 +181,20 @@ class GeneratorAgent:
         cached = self.cache.get_response_cache(query, context_hash)
         if cached is not None:
             cached["cached"] = True
-            logger.info("Returning cached Generator response for query: %.80s…", query)
+            cached["cache_type"] = "exact"
+            logger.info("Returning exact cached response for query: %.80s…", query)
             return cached
+
+        # Tier 2: Native semantic cache
+        semantic_cached = self.cache.get_semantic_response(query)
+        if semantic_cached is not None:
+            logger.info(
+                "Returning semantic cached response (similarity=%.4f) for query: %.80s…",
+                semantic_cached.get("similarity_score", 1.0),
+                query,
+            )
+            return semantic_cached
+
         return None
 
     def _retrieve_context(self, query: str, top_k: int) -> List[Dict[str, Any]]:
