@@ -1,0 +1,147 @@
+## Python Design Patterns: A Comprehensive Guide
+
+### 1. Singleton Pattern
+
+The Singleton pattern ensures that a class has only one instance and provides a global point of access to it. This is useful when exactly one object is needed to coordinate actions across the system.
+
+```python
+class Singleton:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+```
+
+**Use cases:** Database connections, logging, configuration managers, thread pools.
+**Advantages:** Controlled access to a single instance, reduced namespace pollution, lazy initialization.
+**Disadvantages:** Can introduce global state, makes unit testing harder, violates Single Responsibility Principle.
+
+### 2. Factory Method Pattern
+
+The Factory Method pattern defines an interface for creating an object but lets subclasses alter the type of objects that will be created. It promotes loose coupling by eliminating the need to bind application-specific classes into your code.
+
+```python
+from abc import ABC, abstractmethod
+
+class Creator(ABC):
+    @abstractmethod
+    def factory_method(self):
+        pass
+
+    def some_operation(self):
+        product = self.factory_method()
+        return f"Creator works with {product.operation()}"
+
+class ConcreteCreatorA(Creator):
+    def factory_method(self):
+        return ConcreteProductA()
+
+class ConcreteCreatorB(Creator):
+    def factory_method(self):
+        return ConcreteProductB()
+```
+
+**Use cases:** GUI frameworks, document generation, plugin architectures.
+**Advantages:** Follows Open/Closed Principle, promotes loose coupling.
+
+### 3. Observer Pattern
+
+The Observer pattern defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
+
+```python
+class Subject:
+    def __init__(self):
+        self._observers = []
+
+    def attach(self, observer):
+        self._observers.append(observer)
+
+    def detach(self, observer):
+        self._observers.remove(observer)
+
+    def notify(self):
+        for observer in self._observers:
+            observer.update(self)
+```
+
+**Use cases:** Event handling systems, Model-View-Controller (MVC), publish-subscribe messaging.
+**Advantages:** Supports broadcast communication, loose coupling between subject and observers.
+
+### 4. Strategy Pattern
+
+The Strategy pattern defines a family of algorithms, encapsulates each one, and makes them interchangeable. Strategy lets the algorithm vary independently from clients that use it.
+
+```python
+from abc import ABC, abstractmethod
+
+class Strategy(ABC):
+    @abstractmethod
+    def execute(self, data):
+        pass
+
+class ConcreteStrategyA(Strategy):
+    def execute(self, data):
+        return sorted(data)
+
+class ConcreteStrategyB(Strategy):
+    def execute(self, data):
+        return sorted(data, reverse=True)
+
+class Context:
+    def __init__(self, strategy: Strategy):
+        self._strategy = strategy
+
+    def do_work(self, data):
+        return self._strategy.execute(data)
+```
+
+**Use cases:** Sorting algorithms, payment methods, compression algorithms, route calculation.
+
+### 5. Decorator Pattern
+
+The Decorator pattern attaches additional responsibilities to an object dynamically. Decorators provide a flexible alternative to subclassing for extending functionality.
+
+In Python, decorators are a first-class language feature:
+
+```python
+import functools
+
+def timer_decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        print(f"{func.__name__} took {elapsed:.4f}s")
+        return result
+    return wrapper
+```
+
+**Use cases:** Logging, authentication, caching, input validation, rate limiting.
+
+### 6. Repository Pattern
+
+The Repository pattern mediates between the domain and data mapping layers using a collection-like interface for accessing domain objects. It centralizes data access logic and provides a clean separation between business logic and data access.
+
+```python
+class UserRepository:
+    def __init__(self, db_session):
+        self.db = db_session
+
+    def get_by_id(self, user_id):
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def get_all(self):
+        return self.db.query(User).all()
+
+    def add(self, user):
+        self.db.add(user)
+        self.db.commit()
+```
+
+**Use cases:** Data access layers, ORM abstraction, testable business logic.
+**Advantages:** Centralizes data access, makes code testable with mock repositories, allows swapping storage backends.
+
