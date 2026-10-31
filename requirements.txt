@@ -1,0 +1,32 @@
+# ── LangChain / LCEL ──
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langchain-huggingface
+langchain-text-splitters
+
+# ── Vector store & embeddings ──
+chromadb
+sentence-transformers
+
+# ── Document loaders ──
+pymupdf            # PDF
+docx2txt           # DOCX
+python-pptx        # PPTX
+unstructured       # PPT fallback
+beautifulsoup4     # Web pages
+wikipedia          # Wikipedia
+tree-sitter        # Source-code LanguageParser
+tree-sitter-language-pack
+
+# ── Speech-to-text ──
+faster-whisper     # WAV transcription
+
+# ── Cache / memory ──
+redis
+
+# ── Config / UI ──
+python-dotenv
+pydantic
+streamlit
