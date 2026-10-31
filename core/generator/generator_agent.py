@@ -143,6 +143,7 @@ class GeneratorAgent:
         result = {
             "answer": answer,
             "sources": sources,
+            "retrieved_context": context_text, 
             "loop": loop,
             "cached": False,
             "session_id": self.session_id,
